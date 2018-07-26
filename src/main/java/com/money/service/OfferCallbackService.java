@@ -205,7 +205,7 @@ public class OfferCallbackService {
     public String obtain(HttpServletRequest httpServletRequest, String campaignCode){
         String ip= StringUtils.isEmpty(httpServletRequest.getHeader("X-Real-IP"))?httpServletRequest.getRemoteAddr():httpServletRequest.getHeader("X-Real-IP");
 
-        log.info("obtain ip:{}",ip);
+        log.info("campaigncode:{},obtain ip:{}",campaignCode,ip);
         String country="";
         String carrier="";
         IpRelection ipRelection=ipReflectionService.getRelectionByIpLong(ip);
@@ -284,7 +284,19 @@ public class OfferCallbackService {
                 offerRequestLogMapper.recordOfferRequestLog(offerRequestLog);
                 throw new RuntimeException("can't find offer");
             }
-            bestOfferId=global.get(new Random().nextInt(global.size())).getOfferId();
+            int globaltotalScore=0;
+            for (OfferRate offerRate:global){
+                    globaltotalScore+=offerRate.getRate();
+            }
+            int globalTargetScore=new Random().nextInt(globaltotalScore);
+            // random a offerid  default
+            for (OfferRate offerRate:global){
+                globalTargetScore = globalTargetScore - offerRate.getRate();
+                    if (globalTargetScore<=0){
+                        bestOfferId=offerRate.getOfferId();
+                        break;
+                    }
+            }
             log.info("random chooose global offerid:{}",bestOfferId);
         }else{
             int targetScore=new Random().nextInt(totalScore);

@@ -55,6 +55,6 @@ public class IpReflectionService {
     }
 
     public static void main(String[] args) {
-        System.out.println(dot2LongIP("61.144.175.17"));
+        System.out.println(dot2LongIP("83.223.235.218"));
     }
 }

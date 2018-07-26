@@ -1,7 +1,10 @@
 import lombok.SneakyThrows;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.LongAdder;
 
 public class SourceCodeTest {
 
@@ -43,14 +46,19 @@ public class SourceCodeTest {
 //        stringSynchronousQueue.offer("one");
 //        stringSynchronousQueue.poll();
 //
-//        ExecutorService executorService= Executors.newFixedThreadPool(100);
+        ExecutorService executorService= Executors.newFixedThreadPool(100);
 
-        ConcurrentHashMap<String,String> concurrentHashMap=new ConcurrentHashMap<>();
+                ConcurrentHashMap concurrentHashMap=new ConcurrentHashMap<>();
         concurrentHashMap.put("one","two");
         concurrentHashMap.get("one");
 
         AtomicInteger atomicInteger=new AtomicInteger();
         atomicInteger.incrementAndGet();
+
+
+        LongAdder longAdder=new LongAdder();
+        longAdder.add(1);
+        longAdder.sum();
 
 
 

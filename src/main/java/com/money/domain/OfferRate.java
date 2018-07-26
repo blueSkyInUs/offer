@@ -17,7 +17,7 @@ public class OfferRate {
         return StringUtils.isEmpty(country)||country.contains("global")||country.contains("Global");
     }
     public boolean canFitThisIpInfo(IpRelection ipRelection){
-        return (ipRelection.getCountryCode().equals(country)&& ipRelection.getMobileCarrier().equals(mobileCarrier));
+        return ipRelection.getCountryCode().equals(country)&&(StringUtils.isEmpty(mobileCarrier)|| ipRelection.getMobileCarrier().equals(mobileCarrier));
     }
 
 }
