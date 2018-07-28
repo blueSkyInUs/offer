@@ -58,6 +58,8 @@ public class RedisUtil {
 
     public boolean needNotifyAndClear(Campaign campaign){
         try{
+
+            
             mapLock.lock();
             String campaignCode=campaign.getCampaignCode();
             double totalMoney=campaidTotalAmountMap.getOrDefault(campaignCode,0d);
