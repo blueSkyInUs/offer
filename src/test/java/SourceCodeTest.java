@@ -1,11 +1,5 @@
 import lombok.SneakyThrows;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.LongAdder;
-
 public class SourceCodeTest {
 
     @SneakyThrows
@@ -46,19 +40,35 @@ public class SourceCodeTest {
 //        stringSynchronousQueue.offer("one");
 //        stringSynchronousQueue.poll();
 //
-        ExecutorService executorService= Executors.newFixedThreadPool(100);
-
-                ConcurrentHashMap concurrentHashMap=new ConcurrentHashMap<>();
-        concurrentHashMap.put("one","two");
-        concurrentHashMap.get("one");
-
-        AtomicInteger atomicInteger=new AtomicInteger();
-        atomicInteger.incrementAndGet();
+//        ExecutorService executorService= Executors.newFixedThreadPool(100);
 
 
-        LongAdder longAdder=new LongAdder();
-        longAdder.add(1);
-        longAdder.sum();
+//        String usrHome = System.getProperty("user.home");
+//        if(!usrHome.endsWith("/")){
+//            usrHome=usrHome+"/";
+//        }
+//        System.out.println(usrHome);
+//        String ipMapFilePath=usrHome+"ipMapFilePath.important";
+//        File file=new File(ipMapFilePath);
+//        FileOutputStream outputStream = new FileOutputStream(file);
+//        ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+//        long beginTime=System.currentTimeMillis();
+//        TreeMap <Long,IpRelection> temp=new TreeMap<>();
+//        IpRelection ipRelection=new IpRelection();
+//        ipRelection.setCountryCode("ddd");
+//        ipRelection.setIpFrom(293278937L);
+//        temp.put(13232L,ipRelection);
+//        objectOutputStream.writeObject(temp);
+//
+//
+//        FileInputStream inputStream = new FileInputStream(file);
+//        ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
+//        TreeMap <Long,IpRelection>   temp1=(TreeMap <Long,IpRelection> )objectInputStream.readObject();
+//        System.out.println(temp1);
+
+        int result=(int)(0.01*100);
+        System.out.println(result);
+
 
 
 

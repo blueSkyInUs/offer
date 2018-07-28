@@ -45,7 +45,7 @@ public class RedisUtil {
                 offerMoney=new CountAndAmount(0,0);
                 offerStatusCounter.put(key,offerMoney);
             }
-            int money=(int)payout*100;
+            int money=(int)(payout*100);
             offerMoney.setAmount(offerMoney.getAmount()+money);
             double totalMoney=payout+campaidTotalAmountMap.getOrDefault(campaignCode,0d);
             campaidTotalAmountMap.put(campaignCode,totalMoney);

@@ -71,7 +71,7 @@ public class SecondCacheService {
         }else{
             log.info("find in db");
             OfferRequestLog offerRequestLog=offerRequestLogMapper.obtainRequestLobByUniqueKey(uniqueKey);
-            userClickInfo=new UserClickInfo(offerRequestLog.getClickid(),offerRequestLog.getCompaignCode(),Integer.parseInt(offerRequestLog.getOfferid()));
+            userClickInfo=new UserClickInfo(offerRequestLog.getClickid(),offerRequestLog.getCompaignCode(),Integer.parseInt(offerRequestLog.getOfferid()),offerRequestLog.getCountry(),offerRequestLog.getCarrier());
         }
         return userClickInfo;
     }

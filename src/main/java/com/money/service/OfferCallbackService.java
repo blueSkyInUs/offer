@@ -1,6 +1,5 @@
 package com.money.service;
 
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.money.constant.CampaignStatus;
 import com.money.constant.CommonRequestParamConf;
@@ -61,27 +60,29 @@ public class OfferCallbackService {
     public void callback(String queryString,String ip){
         MDC.put("traceId", UUID.randomUUID().toString());
         log.info("callback ip:{}",ip);
-        String carrier="";
-        String country="";
-        IpRelection ipRelection=ipReflectionService.getRelectionByIpLong(ip);
-        if (Objects.nonNull(ipRelection)){
-            carrier=ipRelection.getMobileCarrier();
-            country=ipRelection.getCountryCode();
-        }
+
         JSONObject jsonObject=queryStringToJson(queryString);
         String payout=jsonObject.getString(CommonRequestParamConf.PAYOUT.getRequestParam());
         String uniqueKey=jsonObject.getString(CommonRequestParamConf.CLICKID.getRequestParam());
         String status=(String)jsonObject.getOrDefault(CommonRequestParamConf.STATUS.getRequestParam(),"1");
         //to query in application second cache
         UserClickInfo userClickInfo=secondCacheService.queryClickInfo(uniqueKey);
-        log.info("clickInfo:{}",userClickInfo);
 
+
+        String country=userClickInfo.getCountry();
+        String carrier=userClickInfo.getCarrier();
+        if (StringUtils.isEmpty(country)){
+            IpRelection ipRelection=ipReflectionService.getRelectionByIpLong(ip);
+            if (Objects.nonNull(ipRelection)){
+                carrier=ipRelection.getMobileCarrier();
+                country=ipRelection.getCountryCode();
+            }
+        }
         String campaignCode=userClickInfo.getCampaignCode();
         Integer offerId=userClickInfo.getOfferId();
         String clickid=userClickInfo.getClickId();
         Campaign campaigns= cacheService.getCampaignByCode(campaignCode);
         Offer offer=cacheService.getOfferById(offerId);
-        log.info("right offer:{}",offer);
 
         AffiliateNetwork affiliateNetwork=cacheService.getAffiateNetworkById(offer.getAffiliateNetworkId());
         String ipWhiteList=affiliateNetwork.getPostbackIpWhiteList();
@@ -126,9 +127,7 @@ public class OfferCallbackService {
 
         String callbackUrl=cacheService.getTrafficSourceById(campaigns.getTrafficId()).getPostbackUrl();
 
-        log.info("origin callback_url:{}",callbackUrl);
         callbackUrl=callbackUrl.replace(CommonRequestParamConf.CLICKID.getReplaceString(),clickid);
-        log.info("sec url:{}",callbackUrl);
 
         if(offer.isStaticPrice()){
             payout=offer.getPayoutAmount();
@@ -205,7 +204,7 @@ public class OfferCallbackService {
     public String obtain(HttpServletRequest httpServletRequest, String campaignCode){
         String ip= StringUtils.isEmpty(httpServletRequest.getHeader("X-Real-IP"))?httpServletRequest.getRemoteAddr():httpServletRequest.getHeader("X-Real-IP");
 
-        log.info("campaigncode:{},obtain ip:{}",campaignCode,ip);
+        log.info("obtain ip:{}",ip);
         String country="";
         String carrier="";
         IpRelection ipRelection=ipReflectionService.getRelectionByIpLong(ip);
@@ -246,13 +245,11 @@ public class OfferCallbackService {
             log.info("campaginid:{} is a temp, can't use",campaign.getId());
             throw new RuntimeException("campaign id["+campaign.getId()+"] can't use");
         }
-        log.info("select campagin:{}",campaign);
 
         List<OfferRate> offerRates= cacheService.getOfferInCampaign(campaignCode);
 
         List<OfferRate> global=offerRates.stream().filter(OfferRate::canGlobal).collect(Collectors.toList());
 
-        log.info("offerrate:{}", JSONArray.toJSONString(offerRates));
         int totalScore=0;
         for (OfferRate offerRate:offerRates){
             if( Objects.isNull(ipRelection) || offerRate.canFitThisIpInfo(ipRelection) ){
@@ -286,16 +283,16 @@ public class OfferCallbackService {
             }
             int globaltotalScore=0;
             for (OfferRate offerRate:global){
-                    globaltotalScore+=offerRate.getRate();
+                globaltotalScore+=offerRate.getRate();
             }
             int globalTargetScore=new Random().nextInt(globaltotalScore);
             // random a offerid  default
             for (OfferRate offerRate:global){
                 globalTargetScore = globalTargetScore - offerRate.getRate();
-                    if (globalTargetScore<=0){
-                        bestOfferId=offerRate.getOfferId();
-                        break;
-                    }
+                if (globalTargetScore<=0){
+                    bestOfferId=offerRate.getOfferId();
+                    break;
+                }
             }
             log.info("random chooose global offerid:{}",bestOfferId);
         }else{
@@ -316,7 +313,6 @@ public class OfferCallbackService {
             log.info("offerid:{} not available , select bak offerid:{}",offer.getId(),offer.getBakOfferid());
             offer=cacheService.getOfferById(offer.getBakOfferid());
         }
-        log.info("select offerid:{}",offer.getId());
         String uniqueKey= UniqueKeyUtil.generateKey();
         jsonObject.put(CommonRequestParamConf.CLICKID.getRequestParam(),uniqueKey);
 
@@ -324,6 +320,8 @@ public class OfferCallbackService {
         userClickInfo.setCampaignCode(campaignCode);
         userClickInfo.setClickId(clickId);
         userClickInfo.setOfferId(offer.getId());
+        userClickInfo.setCountry(country);
+        userClickInfo.setCarrier(carrier);
 
 
         String fitCampaignUrl=offer.getUrl();
@@ -358,7 +356,7 @@ public class OfferCallbackService {
     private JSONObject queryStringToJson(String queryString){
         String []params=queryString.split("&");
         JSONObject json=new JSONObject();
-        for (String param:params){
+     for (String param:params){
             String[] elements=param.split("=");
             if(elements.length!=2){
                 continue;

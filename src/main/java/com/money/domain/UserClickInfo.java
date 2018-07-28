@@ -13,4 +13,6 @@ public class UserClickInfo {
     private String clickId;
     private String campaignCode;
     private Integer offerId;
+    private String country;
+    private String carrier;
 }

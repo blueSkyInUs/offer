@@ -33,7 +33,7 @@ public class CacheService {
 
 
     Map<Integer,AffiliateNetwork> affiliateNetworkMap=new HashMap<>();
-    Map<String,Campaign> campaignMap=new HashMap<>();
+     Map<String,Campaign> campaignMap=new HashMap<>();
     Map<Integer,Offer> offerMap=new HashMap<>();
     Map<Integer,TrafficSource> trafficSourceMap=new HashMap<>();
     Map<String,String> normalConfigMap=new HashMap<>();
@@ -108,6 +108,10 @@ public class CacheService {
                 //this mean ,it's depends on other camp
                 if ("2".equals(campaign.getIsTemplate())){
                      Integer id=campaign.getTempId();
+                     if (Objects.isNull(idCampignMaps.get(id))){
+                         log.info("campid:{} not exist",id);
+                         return;
+                     }
                      String campaignCode=idCampignMaps.get(id).getCampaignCode();
                      offerInCampaigns1=tmp.getOrDefault(campaignCode,new ArrayList<>());
                 }else{
@@ -199,5 +203,9 @@ public class CacheService {
     }
 
 
-
+    public void clearAllStatisticsData() {
+        for (String campaignCode:campaignMap.keySet()){
+            clearStatisticsData(campaignCode);
+        }
+    }
 }
