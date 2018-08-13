@@ -173,8 +173,8 @@ public class CacheService {
     public void adjustBestOffer(Map.Entry<String ,List<OfferRate>> data){
         String campaignCode=data.getKey();
         List<OfferRate> offerRates=data.getValue();
-        int totalScore=0;
-        int autoOptThreshold=Integer.parseInt(getConfValueOrDefault("opt_threshold_sample_total_int","500"));
+        double totalScore=0d;
+        int autoOptThreshold=Integer.parseInt(getConfValueOrDefault("opt_threshold_sample_total_int","10000"));
         Map<Object,Object> requestMap=redisTemplate.opsForHash().entries(RedisKey.OFFER_OBTAIN_COUNT_SORTSET+":"+campaignCode);
         Map<Object,Object> callbackMap=redisTemplate.opsForHash().entries(RedisKey.OFFER_CALLBACK_AMOUNT_SORTSET+":"+campaignCode);
         long total=0;
@@ -185,18 +185,19 @@ public class CacheService {
             //sample is less, just follow the db setting,don't opt
             return ;
         }
-        Map<Integer,Integer> offerScore=new HashMap<>();
+        Map<Integer,Double> offerScore=new HashMap<>();
         for (Map.Entry<Object,Object> entry:requestMap.entrySet()){
             long money=Long.parseLong( (String)callbackMap.getOrDefault(entry.getKey(),"0"));
-            int myScore=(int)((money*1.0/Long.parseLong((String)entry.getValue()))*100);
+            double myScore=(money*100000.0/Long.parseLong((String)entry.getValue()))*100;
             offerScore.put(Integer.parseInt((String)entry.getKey()),myScore);
             totalScore+=myScore;
         }
-        final int tmp=totalScore;
+        log.info("{} socres:{}",campaignCode,offerScore);
+        final double tmp=totalScore;
 
         if (tmp!=0){
             offerRates.stream().forEach(offerRate -> {
-                offerRate.setRate((int) (offerScore.getOrDefault(offerRate.getOfferId(),0)*1.0/tmp*100));
+                offerRate.setRate((int) (offerScore.getOrDefault(offerRate.getOfferId(),0d)*1.0/tmp*100));
             });
         }
         log.info("campaignCode:{}  offerRate:{}",campaignCode, JSONArray.toJSON(offerRates));

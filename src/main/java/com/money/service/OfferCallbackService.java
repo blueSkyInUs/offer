@@ -204,7 +204,7 @@ public class OfferCallbackService {
     public String obtain(HttpServletRequest httpServletRequest, String campaignCode){
         String ip= StringUtils.isEmpty(httpServletRequest.getHeader("X-Real-IP"))?httpServletRequest.getRemoteAddr():httpServletRequest.getHeader("X-Real-IP");
 
-        log.info("obtain ip:{}",ip);
+        log.info("campaignCode:{} obtain ip:{}",campaignCode,ip);
         String country="";
         String carrier="";
         IpRelection ipRelection=ipReflectionService.getRelectionByIpLong(ip);
@@ -329,6 +329,7 @@ public class OfferCallbackService {
         for (CommonRequestParamConf commonRequestParamConf:CommonRequestParamConf.values()){
             fitCampaignUrl=fitCampaignUrl.replace(commonRequestParamConf.getReplaceString(),(String)jsonObject.getOrDefault(commonRequestParamConf.getRequestParam(),""));
         }
+        fitCampaignUrl=fitCampaignUrl.replace("{trafficSourceId}",campaign.getTrafficId()+"");
         OfferRequestLog offerRequestLog =new OfferRequestLog();
         offerRequestLog.setAffId(offer.getAffiliateNetworkId()+"");
         offerRequestLog.setBusId("0");

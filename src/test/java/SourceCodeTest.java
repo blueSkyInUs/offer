@@ -66,10 +66,80 @@ public class SourceCodeTest {
 //        TreeMap <Long,IpRelection>   temp1=(TreeMap <Long,IpRelection> )objectInputStream.readObject();
 //        System.out.println(temp1);
 
-        int result=(int)(0.01*100);
-        System.out.println(result);
+//        int result=(int)(0.01*100);
+//        System.out.println(result);
+//
+//        CyclicBarrier cyclicBarrier=new CyclicBarrier(10);
+//        cyclicBarrier.await();
+//
+//
+//        CountDownLatch countDownLatch=new CountDownLatch(1);
+//        countDownLatch.countDown();
+//        countDownLatch.await();
+//        System.out.println("what");
+//        countDownLatch.await();
+//        System.out.println("what");
 
+//        Executors.newCachedThreadPool();
+//
+//        Executors.newScheduledThreadPool(10);
 
+//        ExecutorService executorService=Executors.newSingleThreadExecutor();
+//        executorService.submit(new Runnable() {
+//            @Override
+//            public void run() {
+//                System.out.println("run");
+//                throw  new RuntimeException("what");
+//            }
+//        });
+//        executorService.submit(new Runnable() {
+//            @Override
+//            public void run() {
+//                System.out.println("run");
+//                throw  new RuntimeException("what");
+//            }
+//        });
+//        executorService.shutdown();
+//        executorService.shutdownNow();
+//
+//
+//        ExecutorService executorService1=Executors.newFixedThreadPool(1);
+//        executorService1.submit(new Runnable() {
+//            @Override
+//            public void run() {
+//                System.out.println("run1");
+//                throw  new RuntimeException("what");
+//            }
+//        });
+//        executorService1.submit(new Runnable() {
+//            @Override
+//            public void run() {
+//                System.out.println("run1");
+//                throw  new RuntimeException("what");
+//            }
+//        });
+//        Executors.newCachedThreadPool();
+
+//        Executors.newFixedThreadPool(10);
+
+//        ScheduledExecutorService scheduledExecutorService=Executors.newScheduledThreadPool(10);
+//        scheduledExecutorService.scheduleWithFixedDelay(new Runnable() {
+//            @Override
+//            @SneakyThrows
+//            public void run() {
+//                System.out.println("begin"+System.currentTimeMillis());
+//                Thread.sleep(10000);
+//                System.out.println("end"+System.currentTimeMillis());
+//            }
+//        },0,5, TimeUnit.SECONDS);
+//
+//        scheduledExecutorService.shutdown();
+//        scheduledExecutorService.shutdownNow();
+//
+//        Thread.interrupted();
+
+//        Hashtable hashtable=new Hashtable();
+//        hashtable.put("one",null);
 
 
 
@@ -79,11 +149,32 @@ public class SourceCodeTest {
     }
 
 
-    public static void print(String name,Object ...attributes){
+    public synchronized void print(String name,Object ...attributes){
         System.out.println(name);
 
         for (Object attribute:attributes){
             System.out.println(attribute);
         }
     }
+
+    @SneakyThrows
+    public   synchronized   void printHaha(String name){
+        System.out.println(name);
+        Thread.sleep(10000);
+        System.out.println(name);
+
+    }
+
+    public  static synchronized  void printTime(String name){
+        System.out.println(System.currentTimeMillis()+name);
+    }
+
+    @SneakyThrows
+    public synchronized  void printXIXI(String name){
+        System.out.println("xixi"+name);
+        Thread.sleep(10000);
+        System.out.println("xixi"+name);
+    }
+
+
 }
