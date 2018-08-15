@@ -46,7 +46,7 @@ public class SecondCacheService {
         }finally {
             clickInfoLock.unlock();
         }
-        redisTemplate.opsForValue().set(RedisKey.UNIQUE_KEY_INFO+":"+uniqueKey,JSONObject.toJSONString(userClickInfo),5, TimeUnit.HOURS);
+        redisTemplate.opsForValue().set(RedisKey.UNIQUE_KEY_INFO+":"+uniqueKey,JSONObject.toJSONString(userClickInfo),24, TimeUnit.HOURS);
     }
 
     public UserClickInfo queryClickInfo(String uniqueKey){

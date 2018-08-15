@@ -13,6 +13,6 @@ public interface OfferRequestLogMapper {
                          "values(#{compaignCode},#{clickid},#{affId},#{offerid},#{campId},#{trafficId},#{subId},#{extParam1},#{extParam2},#{busId},#{country},#{carrier},#{ip},#{reqtime},#{type},#{uniqueKey})")
     void recordOfferRequestLog(OfferRequestLog offerRequestLog);
 
-    @Select("select clickid,compaign_code,offerid from hwlk_request where unique_key=#{uniqueKey} order by id desc limit 1")
+    @Select("select clickid,compaign_code,offerid,country,carrier from hwlk_request where unique_key=#{uniqueKey} order by id desc limit 1")
     OfferRequestLog obtainRequestLobByUniqueKey(@Param("uniqueKey") String uniqueKey);
 }
