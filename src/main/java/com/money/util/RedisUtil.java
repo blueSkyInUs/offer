@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Component
@@ -36,17 +35,19 @@ public class RedisUtil {
      * @param offerId
      * @param payout
      */
-    public void recordOfferCallback(String campaignCode,int offerId,double payout){
+    public void recordOfferCallback(String campaignCode,int offerId,double payout,String country,String carrier){
+        redisTemplate.opsForHash().increment(RedisKey.OFFER_CALLBACK_AMOUNT_SORTSET+"1:"+campaignCode,getOfferWithCountryAndCarrier(offerId, country, carrier),(int)(payout*1000));
+
         try{
             mapLock.lock();
-            String key=campaginOfferKey(campaignCode,offerId);
-            CountAndAmount offerMoney=offerStatusCounter.get(key);
-            if (Objects.isNull(offerMoney)){
-                offerMoney=new CountAndAmount(0,0);
-                offerStatusCounter.put(key,offerMoney);
-            }
-            int money=(int)(payout*100);
-            offerMoney.setAmount(offerMoney.getAmount()+money);
+//            String key=campaginOfferKey(campaignCode,offerId);
+//            CountAndAmount offerMoney=offerStatusCounter.get(key);
+//            if (Objects.isNull(offerMoney)){
+//                offerMoney=new CountAndAmount(0,0);
+//                offerStatusCounter.put(key,offerMoney);
+//            }
+//            int money=(int)(payout*100);
+//            offerMoney.setAmount(offerMoney.getAmount()+money);
             double totalMoney=payout+campaidTotalAmountMap.getOrDefault(campaignCode,0d);
             campaidTotalAmountMap.put(campaignCode,totalMoney);
         }catch ( Exception exp){
@@ -58,8 +59,6 @@ public class RedisUtil {
 
     public boolean needNotifyAndClear(Campaign campaign){
         try{
-
-            
             mapLock.lock();
             String campaignCode=campaign.getCampaignCode();
             double totalMoney=campaidTotalAmountMap.getOrDefault(campaignCode,0d);
@@ -79,46 +78,52 @@ public class RedisUtil {
      * record the total request
      * @param offerId
      */
-    public void recordOfferObtain(String campaigCode,int offerId){
-        try{
-            mapLock.lock();
-            String key=campaginOfferKey(campaigCode,offerId);
-            CountAndAmount offerMoney=offerStatusCounter.get(key);
-            if (Objects.isNull(offerMoney)){
-                offerMoney=new CountAndAmount(0,0);
-                offerStatusCounter.put(key,offerMoney);
-            }
-            offerMoney.setCount(offerMoney.getCount()+1);
-        }catch ( Exception exp){
-            log.error(exp.getMessage(),exp);
-        }finally {
-            mapLock.unlock();
-        }
+    public void recordOfferObtain(String campaigCode,int offerId,String country,String carrier){
+        redisTemplate.opsForHash().increment(RedisKey.OFFER_OBTAIN_COUNT_SORTSET+"1:"+campaigCode,getOfferWithCountryAndCarrier(offerId,country,carrier),1);
+//        try{
+//            mapLock.lock();
+//            String key=campaginOfferKey(campaigCode,offerId);
+//            CountAndAmount offerMoney=offerStatusCounter.get(key);
+//            if (Objects.isNull(offerMoney)){
+//                offerMoney=new CountAndAmount(0,0);
+//                offerStatusCounter.put(key,offerMoney);
+//            }
+//            offerMoney.setCount(offerMoney.getCount()+1);
+//        }catch ( Exception exp){
+//            log.error(exp.getMessage(),exp);
+//        }finally {
+//            mapLock.unlock();
+//        }
     }
 
     public void refreshToRedis(){
-        try{
-          mapLock.lock();
-          log.info("refresh localdata to  redis....");
-          offerStatusCounter.entrySet().parallelStream().forEach(entry->{
-                String[] elements=entry.getKey().split(":");
-                String campaignCode=elements[0];
-                String offerId=elements[1];
-                log.info("value in here:{}-->{}",entry.getKey(),entry.getValue());
-                redisTemplate.opsForHash().increment(RedisKey.OFFER_OBTAIN_COUNT_SORTSET+":"+campaignCode,offerId,entry.getValue().getCount());
-                redisTemplate.opsForHash().increment(RedisKey.OFFER_CALLBACK_AMOUNT_SORTSET+":"+campaignCode,offerId,entry.getValue().getAmount());
-          });
-          log.info("end refresh localdata to redis....");
-            offerStatusCounter=new HashMap<>();
-        }catch (Exception exp){
-          log.error(exp.getMessage(),exp);
-        }finally {
-          mapLock.unlock();
-        }
+//        try{
+//          mapLock.lock();
+//          log.info("refresh localdata to  redis....");
+//          offerStatusCounter.entrySet().parallelStream().forEach(entry->{
+//                String[] elements=entry.getKey().split(":");
+//                String campaignCode=elements[0];
+//                String offerId=elements[1];
+//                log.info("value in here:{}-->{}",entry.getKey(),entry.getValue());
+//                redisTemplate.opsForHash().increment(RedisKey.OFFER_OBTAIN_COUNT_SORTSET+":"+campaignCode,offerId,entry.getValue().getCount());
+//                redisTemplate.opsForHash().increment(RedisKey.OFFER_CALLBACK_AMOUNT_SORTSET+":"+campaignCode,offerId,entry.getValue().getAmount());
+//          });
+//          log.info("end refresh localdata to redis....");
+//            offerStatusCounter=new HashMap<>();
+//        }catch (Exception exp){
+//          log.error(exp.getMessage(),exp);
+//        }finally {
+//          mapLock.unlock();
+//        }
     }
 
     private String campaginOfferKey(String campaignCode,int offerId){
        return campaignCode+":"+offerId;
+    }
+
+
+    public String getOfferWithCountryAndCarrier(int offerId,String country,String carrier){
+        return offerId+"-"+country+"-"+carrier;
     }
 
 

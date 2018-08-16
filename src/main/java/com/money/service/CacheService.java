@@ -163,8 +163,8 @@ public class CacheService {
     }
 
     public void clearStatisticsData(String compaignCode){
-        redisTemplate.delete(RedisKey.OFFER_CALLBACK_AMOUNT_SORTSET+":"+compaignCode);
-        redisTemplate.delete(RedisKey.OFFER_OBTAIN_COUNT_SORTSET+":"+compaignCode);
+        redisTemplate.delete(RedisKey.OFFER_CALLBACK_AMOUNT_SORTSET+"1:"+compaignCode);
+        redisTemplate.delete(RedisKey.OFFER_OBTAIN_COUNT_SORTSET+"1:"+compaignCode);
     }
     /**
      * select the best offer in this traffic
@@ -175,8 +175,8 @@ public class CacheService {
         List<OfferRate> offerRates=data.getValue();
         double totalScore=0d;
         int autoOptThreshold=Integer.parseInt(getConfValueOrDefault("opt_threshold_sample_total_int","10000"));
-        Map<Object,Object> requestMap=redisTemplate.opsForHash().entries(RedisKey.OFFER_OBTAIN_COUNT_SORTSET+":"+campaignCode);
-        Map<Object,Object> callbackMap=redisTemplate.opsForHash().entries(RedisKey.OFFER_CALLBACK_AMOUNT_SORTSET+":"+campaignCode);
+        Map<Object,Object> requestMap=redisTemplate.opsForHash().entries(RedisKey.OFFER_OBTAIN_COUNT_SORTSET+"1:"+campaignCode);
+        Map<Object,Object> callbackMap=redisTemplate.opsForHash().entries(RedisKey.OFFER_CALLBACK_AMOUNT_SORTSET+"1:"+campaignCode);
         long total=0;
         for (Object count:requestMap.values()){
             total+=Long.parseLong((String)count);
@@ -185,19 +185,40 @@ public class CacheService {
             //sample is less, just follow the db setting,don't opt
             return ;
         }
-        Map<Integer,Double> offerScore=new HashMap<>();
+        Map<String,Double> offerScore=new HashMap<>();
+        int count30Upper=0;
         for (Map.Entry<Object,Object> entry:requestMap.entrySet()){
             long money=Long.parseLong( (String)callbackMap.getOrDefault(entry.getKey(),"0"));
-            double myScore=(money*100000.0/Long.parseLong((String)entry.getValue()))*100;
-            offerScore.put(Integer.parseInt((String)entry.getKey()),myScore);
-            totalScore+=myScore;
+            double myScore=(money*1.0/Long.parseLong((String)entry.getValue()))*100;
+            //低于 0.5 或者高于30 需特殊处理  先标记为-1
+            if (myScore>=30 || myScore<=0.5){
+                offerScore.put((String)entry.getKey(),-1d);
+                count30Upper++;
+            }else{
+                offerScore.put((String)entry.getKey(),myScore);
+                totalScore+=myScore;
+            }
+
         }
         log.info("{} socres:{}",campaignCode,offerScore);
         final double tmp=totalScore;
-
+        //低于 0.5 或者高于30 的流量总共只能占用10%
         if (tmp!=0){
+            int rate=100;
+            int avgRate=0;
+            if (count30Upper!=0){
+                avgRate=10/count30Upper==0?1:10/count30Upper;
+                rate=90;
+            }
+            int tempRate=rate;
+            int tempAvgRate=avgRate;
             offerRates.stream().forEach(offerRate -> {
-                offerRate.setRate((int) (offerScore.getOrDefault(offerRate.getOfferId(),0d)*1.0/tmp*100));
+                double score=offerScore.getOrDefault(getOfferWithCountryAndCarrier(offerRate.getOfferId(),offerRate.getCountry(),offerRate.getMobileCarrier()),0d);
+                if (score!=-1){
+                    offerRate.setRate((int)(score/tmp*tempRate));
+                }else{
+                    offerRate.setRate(tempAvgRate);
+                }
             });
         }
         log.info("campaignCode:{}  offerRate:{}",campaignCode, JSONArray.toJSON(offerRates));
@@ -208,5 +229,10 @@ public class CacheService {
         for (String campaignCode:campaignMap.keySet()){
             clearStatisticsData(campaignCode);
         }
+    }
+
+
+    private String getOfferWithCountryAndCarrier(int offerId,String country,String carrier){
+        return offerId+"-"+country+"-"+carrier;
     }
 }

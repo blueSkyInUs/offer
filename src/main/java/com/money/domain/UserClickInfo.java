@@ -15,4 +15,7 @@ public class UserClickInfo {
     private Integer offerId;
     private String country;
     private String carrier;
+    //这两个字段仅用作后续统计用 规避前端比如 country有global 空这种杂七杂八的鸡儿东西
+    private String country_temp;
+    private String carrier_temp;
 }

@@ -71,13 +71,8 @@ public class OfferCallbackService {
 
         String country=userClickInfo.getCountry();
         String carrier=userClickInfo.getCarrier();
-        if (StringUtils.isEmpty(country)){
-            IpRelection ipRelection=ipReflectionService.getRelectionByIpLong(ip);
-            if (Objects.nonNull(ipRelection)){
-                carrier=ipRelection.getMobileCarrier();
-                country=ipRelection.getCountryCode();
-            }
-        }
+        String countryTemp=(null==userClickInfo.getCountry_temp()?country:userClickInfo.getCountry_temp());
+        String carrierTemp=(null==userClickInfo.getCarrier_temp()?carrier:userClickInfo.getCarrier_temp());
         String campaignCode=userClickInfo.getCampaignCode();
         Integer offerId=userClickInfo.getOfferId();
         String clickid=userClickInfo.getClickId();
@@ -109,7 +104,7 @@ public class OfferCallbackService {
         affiliateNotifyLog.setUniqueKey(uniqueKey);
         affiliateNotifyLogMapper.recordAffiliateNotifyCallback(affiliateNotifyLog);
 
-        redisUtil.recordOfferCallback(campaignCode,offerId,Double.parseDouble(payout));
+        redisUtil.recordOfferCallback(campaignCode,offerId,Double.parseDouble(payout),countryTemp,carrierTemp);
         String response="";
         int resultCode=200;
 
@@ -205,8 +200,8 @@ public class OfferCallbackService {
         String ip= StringUtils.isEmpty(httpServletRequest.getHeader("X-Real-IP"))?httpServletRequest.getRemoteAddr():httpServletRequest.getHeader("X-Real-IP");
 
         log.info("campaignCode:{} obtain ip:{}",campaignCode,ip);
-        String country="";
-        String carrier="";
+        String country=null;
+        String carrier=null;
         IpRelection ipRelection=ipReflectionService.getRelectionByIpLong(ip);
         log.info("ipRelection:{}",ipRelection);
         if (Objects.nonNull(ipRelection)){
@@ -259,6 +254,7 @@ public class OfferCallbackService {
         }
         log.info("totalScore:{}",totalScore);
         int bestOfferId=-1;
+        OfferRate targetOfferRate=null;
         if (totalScore==0){
             if (global.isEmpty()){
                 OfferRequestLog offerRequestLog =new OfferRequestLog();
@@ -291,6 +287,7 @@ public class OfferCallbackService {
                 globalTargetScore = globalTargetScore - offerRate.getRate();
                 if (globalTargetScore<=0){
                     bestOfferId=offerRate.getOfferId();
+                    targetOfferRate=offerRate;
                     break;
                 }
             }
@@ -303,6 +300,7 @@ public class OfferCallbackService {
                     targetScore = targetScore - offerRate.getRate();
                     if (targetScore<=0){
                         bestOfferId=offerRate.getOfferId();
+                        targetOfferRate=offerRate;
                         break;
                     }
                 }
@@ -322,6 +320,8 @@ public class OfferCallbackService {
         userClickInfo.setOfferId(offer.getId());
         userClickInfo.setCountry(country);
         userClickInfo.setCarrier(carrier);
+        userClickInfo.setCarrier_temp(targetOfferRate.getMobileCarrier());
+        userClickInfo.setCountry_temp(targetOfferRate.getCountry());
 
 
         String fitCampaignUrl=offer.getUrl();
@@ -349,7 +349,7 @@ public class OfferCallbackService {
         offerRequestLog.setUniqueKey(uniqueKey);
 
         offerRequestLogMapper.recordOfferRequestLog(offerRequestLog);
-        redisUtil.recordOfferObtain(campaignCode,bestOfferId);
+        redisUtil.recordOfferObtain(campaignCode,bestOfferId,targetOfferRate.getCountry(),targetOfferRate.getMobileCarrier());
         secondCacheService.recordClickInfo(uniqueKey,userClickInfo);
         return fitCampaignUrl;
     }
