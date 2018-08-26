@@ -141,7 +141,7 @@ public class SourceCodeTest {
 //        Hashtable hashtable=new Hashtable();
 //        hashtable.put("one",null);
 
-
+   new String("");
 
 
 

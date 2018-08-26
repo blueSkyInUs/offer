@@ -245,18 +245,40 @@ public class OfferCallbackService {
 
         List<OfferRate> global=offerRates.stream().filter(OfferRate::canGlobal).collect(Collectors.toList());
 
+
         int totalScore=0;
+        int totalScoreWithoutCompareCarrier=0;
+        List<OfferRate> offerRateWithoutCompareCarrierList=new ArrayList<>();
         for (OfferRate offerRate:offerRates){
-            if( Objects.isNull(ipRelection) || offerRate.canFitThisIpInfo(ipRelection) ){
+            if( Objects.isNull(ipRelection) || offerRate.canFitThisIpInfoExactly(ipRelection) ){
                 log.info("offer:{} can choose",offerRate);
                 totalScore+=offerRate.getRate();
+            }else if (offerRate.canFitThisIpInfoWithoutCompareCarrier(ipRelection)){
+                totalScoreWithoutCompareCarrier+=offerRate.getRate();
+                offerRateWithoutCompareCarrierList.add(offerRate);
             }
         }
         log.info("totalScore:{}",totalScore);
         int bestOfferId=-1;
         OfferRate targetOfferRate=null;
+        //先精确匹配  国家运营商 必须全部对应上
         if (totalScore==0){
-            if (global.isEmpty()){
+            //退一步  允许运营商不匹配上 如果数据库有 运营商配置为空的情况
+            if (totalScoreWithoutCompareCarrier!=0){
+                int targetScore=new Random().nextInt(totalScoreWithoutCompareCarrier);
+                // random a offerid  default
+                for (OfferRate offerRate:offerRateWithoutCompareCarrierList){
+                        targetScore = targetScore - offerRate.getRate();
+                        if (targetScore<=0){
+                            bestOfferId=offerRate.getOfferId();
+                            targetOfferRate=offerRate;
+                            log.info("choose no carrier compare offerid:{}",bestOfferId);
+                            break;
+                        }
+                }
+
+            } //再退一步 国家 运营商都没有匹配上  看看有没有配置global的
+            else if (global.isEmpty()){
                 OfferRequestLog offerRequestLog =new OfferRequestLog();
                 offerRequestLog.setAffId("0");
                 offerRequestLog.setBusId("0");
@@ -276,19 +298,20 @@ public class OfferCallbackService {
                 offerRequestLog.setUniqueKey(UniqueKeyUtil.generateKey());
                 offerRequestLogMapper.recordOfferRequestLog(offerRequestLog);
                 throw new RuntimeException("can't find offer");
-            }
-            int globaltotalScore=0;
-            for (OfferRate offerRate:global){
-                globaltotalScore+=offerRate.getRate();
-            }
-            int globalTargetScore=new Random().nextInt(globaltotalScore);
-            // random a offerid  default
-            for (OfferRate offerRate:global){
-                globalTargetScore = globalTargetScore - offerRate.getRate();
-                if (globalTargetScore<=0){
-                    bestOfferId=offerRate.getOfferId();
-                    targetOfferRate=offerRate;
-                    break;
+            }else {
+                int globaltotalScore=0;
+                for (OfferRate offerRate:global){
+                    globaltotalScore+=offerRate.getRate();
+                }
+                int globalTargetScore=new Random().nextInt(globaltotalScore);
+                // random a offerid  default
+                for (OfferRate offerRate:global){
+                    globalTargetScore = globalTargetScore - offerRate.getRate();
+                    if (globalTargetScore<=0){
+                        bestOfferId=offerRate.getOfferId();
+                        targetOfferRate=offerRate;
+                        break;
+                    }
                 }
             }
             log.info("random chooose global offerid:{}",bestOfferId);
@@ -296,7 +319,7 @@ public class OfferCallbackService {
             int targetScore=new Random().nextInt(totalScore);
             // random a offerid  default
             for (OfferRate offerRate:offerRates){
-                if( Objects.isNull(ipRelection) || offerRate.canFitThisIpInfo(ipRelection) ){
+                if( Objects.isNull(ipRelection) || offerRate.canFitThisIpInfoExactly(ipRelection) ){
                     targetScore = targetScore - offerRate.getRate();
                     if (targetScore<=0){
                         bestOfferId=offerRate.getOfferId();

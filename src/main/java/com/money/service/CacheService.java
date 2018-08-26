@@ -5,6 +5,7 @@ import com.money.constant.RedisKey;
 import com.money.domain.*;
 import com.money.mapper.*;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -75,6 +76,7 @@ public class CacheService {
 
     @PostConstruct
     public void init(){
+        MDC.put("traceId", UUID.randomUUID().toString());
         try{
             Map<Integer,AffiliateNetwork> affiliateNetworkMapTmp=new HashMap<>();
             Map<String,Campaign> campaignMapTmp=new HashMap<>();
@@ -160,6 +162,7 @@ public class CacheService {
         }catch (Exception exp){
             log.error("刷新缓存出错"+exp.getMessage(),exp);
         }
+        MDC.remove("traceId");
     }
 
     public void clearStatisticsData(String compaignCode){
@@ -177,6 +180,7 @@ public class CacheService {
         int autoOptThreshold=Integer.parseInt(getConfValueOrDefault("opt_threshold_sample_total_int","10000"));
         Map<Object,Object> requestMap=redisTemplate.opsForHash().entries(RedisKey.OFFER_OBTAIN_COUNT_SORTSET+"1:"+campaignCode);
         Map<Object,Object> callbackMap=redisTemplate.opsForHash().entries(RedisKey.OFFER_CALLBACK_AMOUNT_SORTSET+"1:"+campaignCode);
+        log.info("campcode:{},stastics origin data:request:{},amount:{}",campaignCode,requestMap,callbackMap);
         long total=0;
         for (Object count:requestMap.values()){
             total+=Long.parseLong((String)count);
@@ -189,7 +193,7 @@ public class CacheService {
         int count30Upper=0;
         for (Map.Entry<Object,Object> entry:requestMap.entrySet()){
             long money=Long.parseLong( (String)callbackMap.getOrDefault(entry.getKey(),"0"));
-            double myScore=(money*1.0/Long.parseLong((String)entry.getValue()))*100;
+            double myScore=(money*1.0/Long.parseLong((String)entry.getValue()));
             //低于 0.5 或者高于30 需特殊处理  先标记为-1
             if (myScore>=30 || myScore<=0.5){
                 offerScore.put((String)entry.getKey(),-1d);
