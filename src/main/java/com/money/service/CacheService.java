@@ -191,11 +191,13 @@ public class CacheService {
         }
         Map<String,Double> offerScore=new HashMap<>();
         int count30Upper=0;
+        double normalPercentMin=Double.parseDouble(getConfValueOrDefault("normal_percent_min","0.01"));
+        double normalPercentMax=Double.parseDouble(getConfValueOrDefault("normal_percent_max","30"));
         for (Map.Entry<Object,Object> entry:requestMap.entrySet()){
             long money=Long.parseLong( (String)callbackMap.getOrDefault(entry.getKey(),"0"));
             double myScore=(money*1.0/Long.parseLong((String)entry.getValue()));
             //低于 0.5 或者高于30 需特殊处理  先标记为-1
-            if (myScore>=30 || myScore<=0.5){
+            if (myScore>=normalPercentMax || myScore<=normalPercentMin){
                 offerScore.put((String)entry.getKey(),-1d);
                 count30Upper++;
             }else{
